@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  name      String
+  username  String
+  isAdmin    Boolean? @map("is_admin")  @default(false)
+  bio       String?
+  website   String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //relations
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
+
+  @@map("users")
+}
+
+model Post {
+  id         String   @id @default(cuid())
+  title      String
+  summary    String
+  body       String
+  image      String?
+  publicId   String?  @map("public_id")
+  categoryId String   @map("category_id")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  authorId   String   @map("author_id")
+
+  //relations
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  likes    Like[]
+
+  @@map("posts")
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  String   @map("author_id")
+  postId    String   @map("post_id")
+
+  //relations
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, postId])
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @map("user_id")
+  postId    String   @map("post_id")
+
+  //relations
+  author User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([userId, postId])
+  @@map("likes")
+}
